@@ -1,0 +1,64 @@
+-- // RwfusBoy \\--
+-- // How to use \\--
+
+-- local PrefixModule = require(script)
+-- local newTag = PrefixModule.new() or PrefixModule.new(player)
+-- newTag.Prefix = "[Teste 123]"
+-- newTag.Color = Color3.new(1, 0.215686, 0.254902)
+-- newTag.Player = player
+
+-- \\ End //--
+
+local textChatService = game:GetService("TextChatService");
+local PrefixModule = {
+    ["Players"] = {},
+    ["Functions"] = {
+        ["Player"] = function(p)
+            return p.UserId;
+        end,
+        ["Prefix"] = function(prefix)
+            return tostring(prefix);
+        end,
+        ["Color"] = function(color)
+            local isColor3 = typeof(color) == "Color3";
+            if not isColor3 then
+                warn("["..script.Name.."] ".."Set color using Color3.");
+                warn(debug.info(3, "s")..": Line "..debug.info(3, "l")..".");
+                return;
+            end;
+            local color = color:ToHex();
+            return "#"..color;
+        end;
+    };
+};
+
+function PrefixModule.new(p)
+    local mt = {
+        __newindex = function(self, index, value)
+            local value = PrefixModule.Functions[index](value)
+            rawset(self, index, value)
+            if not self.Player then return end
+            PrefixModule.Players[self.Player] = {["Prefix"] = self.Prefix, ["Color"] = self.Color}
+        end;
+    };
+    local plr;
+    if p then plr = p.UserId end;
+    return setmetatable({
+        Player = plr,
+        Prefix = nil,
+        Color = nil
+    }, mt);
+end;
+
+local function verifyId(message)
+    local id = message.TextSource.UserId;
+    local data = PrefixModule.Players[id];
+    if not data then return end;
+    local props = Instance.new("TextChatMessageProperties");
+    local text = "<font color=\""..data.Color.."\">"..data.Prefix.."</font> ";
+    props.PrefixText = text..message.PrefixText;
+    return props;
+end;
+
+textChatService.OnIncomingMessage = verifyId;
+return PrefixModule;

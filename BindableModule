@@ -1,0 +1,47 @@
+--//rwfus - bindable module
+----Uso
+--local tracker = Signal.SignalName:Connect(function)
+--tracker:Disconnect() to disconnect event
+--To fire signal: Signal:Fire("SignalName", parameter1, parameter2)
+local Signal = setmetatable({}, {    
+    __index = function(self, index)
+        local signal = self
+        local haveindex = rawget(self, index)
+        if haveindex then
+            return haveindex
+        end
+
+        local tbl = {};
+        function tbl:Connect(func)
+            local ftype = "function"
+            if not func or type(func) ~= ftype then
+                warn(debug.info(2, "s")..":"..debug.info(2, "l")..": A "..typeof(func).." value has passed, but what is expected is a "..ftype..".")
+                return
+            end
+            table.insert(self, func);
+            local ftbl = {}
+            function ftbl:Disconnect()
+                local index = table.find(tbl, func)
+                print(index)
+                table.remove(tbl, index)
+                if #tbl == 0 then
+                    local index = table.find(signal, tbl)
+                    table.remove(signal, index)
+                end
+            end
+            return ftbl
+        end;
+        rawset(self, index, tbl);
+        return tbl;
+    end;
+});
+
+function Signal:Fire(index, ...)
+    local funcs = rawget(self, index);
+    if not funcs then return end
+    for _, func in ipairs(funcs) do
+        func(...);
+    end;
+end;
+
+return Signal;
